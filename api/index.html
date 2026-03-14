@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WallPlan — Analyse patrimoniale IA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f0f;color:#e8e8e8;min-height:100vh;padding:20px}
+.app{max-width:800px;margin:0 auto}
+.hero{text-align:center;padding:40px 0 30px}
+.hero h1{font-size:28px;font-weight:600;color:#fff;margin-bottom:8px}
+.hero p{font-size:15px;color:#888}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:24px;margin-bottom:16px}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#555;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #222}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:#888;font-weight:500}
+.field input,.field select{background:#111;border:1px solid #333;color:#e8e8e8;padding:10px 12px;border-radius:10px;font-size:14px;outline:none}
+.field input:focus,.field select:focus{border-color:#555}
+.field .hint{font-size:11px;color:#555}
+.field select option{background:#111}
+.launch-btn{width:100%;padding:14px;font-size:15px;font-weight:600;cursor:pointer;border-radius:12px;background:#fff;color:#000;border:none;transition:opacity .2s}
+.launch-btn:hover{opacity:.9}
+.launch-btn:disabled{opacity:.3;cursor:default}
+.agents{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px;display:none}
+.agent{background:#111;border:1px solid #222;border-radius:10px;padding:8px 6px;text-align:center;transition:all .3s}
+.agent.running{background:#0a1628;border-color:#1e40af}
+.agent.done{background:#051a10;border-color:#166534}
+.agent-num{font-size:10px;color:#555;margin-bottom:2px;font-weight:600}
+.agent.running .agent-num{color:#60a5fa}
+.agent.done .agent-num{color:#4ade80}
+.agent-name{font-size:11px;color:#666;line-height:1.3;font-weight:500}
+.agent.running .agent-name{color:#93c5fd}
+.agent.done .agent-name{color:#86efac}
+.agent-st{font-size:10px;color:#444;margin-top:2px}
+.agent.running .agent-st{color:#60a5fa}
+.agent.done .agent-st{color:#4ade80}
+.progress{height:3px;background:#222;border-radius:2px;margin-bottom:16px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:#4ade80;border-radius:2px;width:0%;transition:width .6s ease}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.sc{background:#111;border-radius:10px;padding:12px}
+.sc-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.04em}
+.sc-val{font-size:15px;font-weight:600;color:#fff;margin-top:4px}
+.sec{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;margin-bottom:8px;overflow:hidden}
+.sec-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
+.sec-head:hover{background:#222}
+.sec-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.sec-tw{flex:1}
+.sec-title{font-size:13px;font-weight:600;color:#e8e8e8}
+.sec-sub{font-size:11px;color:#555;margin-top:1px}
+.sec-badge{font-size:10px;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.sec-chev{font-size:11px;color:#444;transition:transform .2s;margin-left:4px}
+.sec-chev.open{transform:rotate(180deg)}
+.sec-loading{padding:14px 16px;display:none;align-items:center;gap:8px;border-top:1px solid #222}
+.sec-loading.show{display:flex}
+.dot{width:5px;height:5px;border-radius:50%;background:#444;animation:pu .8s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.15s}
+.dot:nth-child(3){animation-delay:.3s}
+@keyframes pu{0%,100%{opacity:.2}50%{opacity:1}}
+.loading-lbl{font-size:12px;color:#555}
+.sec-body{padding:14px 16px;display:none;font-size:13px;color:#999;line-height:1.8;white-space:pre-wrap;border-top:1px solid #222}
+.sec-body.open{display:block}
+.btns{display:flex;gap:8px;margin-top:16px}
+.btn{flex:1;padding:10px;font-size:13px;cursor:pointer;border-radius:10px;background:#1a1a1a;border:1px solid #333;color:#888}
+.btn:hover{background:#222;color:#ccc}
+.disclaimer{font-size:11px;color:#444;text-align:center;margin-top:16px;line-height:1.6}
+@media(max-width:600px){.grid3{grid-template-columns:1fr 1fr}.agents{grid-template-columns:repeat(5,1fr)}.summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <h1>WallPlan</h1>
+    <p>10 agents Wall Street analysent votre profil en temps réel</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Votre argent</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Capital disponible (€)</label>
+        <input type="number" id="capital" placeholder="ex : 5 000" min="0">
+        <span class="hint">Ce que vous avez maintenant</span>
+      </div>
+      <div class="field">
+        <label>Épargne mensuelle (€)</label>
+        <input type="number" id="mensuel" placeholder="ex : 300" min="0">
+        <span class="hint">Ce que vous mettez chaque mois</span>
+      </div>
+      <div class="field">
+        <label>Objectif cible (€) — optionnel</label>
+        <input type="number" id="objectif" placeholder="ex : 50 000" min="0">
+        <span class="hint">Montant que vous voulez atteindre</span>
+      </div>
+    </div>
+    <div class="section-label">Votre profil</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Horizon de temps</label>
+        <select id="horizon">
+          <option value="1 à 2 ans">Court terme (1-2 ans)</option>
+          <option value="3 à 5 ans" selected>Moyen terme (3-5 ans)</option>
+          <option value="5 à 10 ans">Long terme (5-10 ans)</option>
+          <option value="10 ans et plus">Très long terme (10+)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tolérance au risque</label>
+        <select id="ris
